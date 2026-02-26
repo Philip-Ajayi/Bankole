@@ -3,7 +3,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: Blue Wave",
+  title: "Blue Wave",
   description: "Blue Wave",
 };
 
