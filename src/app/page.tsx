@@ -231,7 +231,13 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState([{ type: 'bot', text: 'Welcome to Bluewave! How can we help you today?' }]);
   const [inputMsg, setInputMsg] = useState('');
-
+useEffect(() => {
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}, [theme]);
   // Auto Theme based on time (6PM to 6AM = dark)
   useEffect(() => {
     const hour = new Date().getHours();
