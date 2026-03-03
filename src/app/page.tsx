@@ -1,98 +1,68 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { 
-  motion, 
-  AnimatePresence, 
-  useScroll, 
-  useTransform, 
-  useSpring,
-  useInView 
-} from 'framer-motion';
-import { 
-  Menu, X, ChevronDown, ChevronRight, Sun, Moon, 
-  Twitter, Linkedin, Send, MessageCircle, ArrowRight,
-  Leaf, Sprout, Globe, Package, Calendar, TrendingUp,
-  Users, Mail, User, ShieldCheck
+  ChevronDown, Menu, X, Sun, Moon, ArrowRight, MessageCircle, 
+  Send, Leaf, Globe, TrendingUp, Calendar, ShoppingCart, 
+  Linkedin, Twitter, Play, Pause, Droplets, Zap
 } from 'lucide-react';
 
-// --- TYPES ---
-type NavItem = {
-  title: string;
-  link: string;
-  submenu?: NavItem[];
-};
-
-type GlassCardProps = {
-  children: React.ReactNode;
-  className?: string;
-};
-
-type AnimatedNumberProps = {
-  value: number;
-};
-
-type Theme = 'light' | 'dark';
-
-type ThemeToggleProps = {
-  theme: Theme;
-  toggleTheme: () => void;
-};
-
-type DropdownMenuProps = {
-  item: NavItem;
-  isMobile?: boolean; // make optional (important fix)
-};
-
 // --- DATA ---
-const NAV_DATA = [
-  { title: "Home", link: "#", submenu: [] },
+const NAVIGATION_DATA = [
+  { title: "Home", link: "/home", submenu: [] },
   {
-    title: "About Us", link: "#",
+    title: "About Us",
+    link: "/about-us",
     submenu: [
-      { title: "Our Story", link: "#" },
-      { title: "Mission/Vision", link: "#" },
-      { title: "Team/Farmers", link: "#" }
+      { title: "Our Story", link: "/about-us/our-story" },
+      { title: "Mission/Vision", link: "/about-us/mission-vision" },
+      { title: "Team/Farmers", link: "/about-us/team-farmers" }
     ]
   },
   {
-    title: "Farming Practice", link: "#",
+    title: "Farming Practice",
+    link: "/farming-practice",
     submenu: [
       {
-        title: "Crop Farming", link: "#",
+        title: "Crop Farming",
+        link: "/farming-practice/crop-farming",
         submenu: [
-          { title: "Cocoa Farming", link: "#" },
-          { title: "Cashew Farming", link: "#" }
+          { title: "Cocoa Farming", link: "/farming-practice/crop-farming/cocoa" },
+          { title: "Cashew Farming", link: "/farming-practice/crop-farming/cashew" }
         ]
       },
-      { title: "Sustainable Farming", link: "#" },
-      { title: "Organic Farming", link: "#" },
-      { title: "Farming Calendar", link: "#" }
+      { title: "Sustainable Farming", link: "/farming-practice/sustainable-farming" },
+      { title: "Organic Farming", link: "/farming-practice/organic-farming" },
+      { title: "Farming Calendar", link: "/farming-practice/farming-calendar" }
     ]
   },
   {
-    title: "Products", link: "#",
+    title: "Products",
+    link: "/products",
     submenu: [
-      { title: "Cocoa Beans", link: "#" },
-      { title: "Cashew Nuts", link: "#" },
-      { title: "Quality & Grading", link: "#" },
-      { title: "Packaging & Bulk", link: "#" }
+      { title: "Cocoa Beans", link: "/products/cocoa-beans" },
+      { title: "Cashew Nuts", link: "/products/cashew-nuts" },
+      { title: "Quality & Grading", link: "/products/quality-grading" },
+      { title: "Bulk Orders", link: "/products/packaging-bulk-orders" }
     ]
   },
   {
-    title: "Services", link: "#",
+    title: "Services",
+    link: "/services",
     submenu: [
-      { title: "Workshops", link: "#" },
-      { title: "Farm Tours", link: "#" }
+      { title: "Workshops", link: "/services/consultations-workshops" },
+      { title: "Farm Tours", link: "/services/farm-tours" }
     ]
   },
-  { title: "Bid/Reservation", link: "#", submenu: [] },
-  { title: "Blog", link: "#", submenu: [] },
+  { title: "Bid/Reservation", link: "/bid-reservation", submenu: [] },
+  { title: "Blog", link: "/blog", submenu: [] },
   {
-    title: "Contact Us", link: "#",
+    title: "Contact",
+    link: "/contact-us",
     submenu: [
-      { title: "Social Media", link: "#" },
-      { title: "Careers", link: "#" }
+      { title: "Social Media", link: "/contact-us/form-map-social" },
+      { title: "Careers", link: "/contact-us/careers-volunteer" }
     ]
   }
 ];
@@ -104,120 +74,150 @@ const METRICS = {
   number_of_global_trade_partners: 4
 };
 
-const BLOGS = [
+const RECENT_BLOGS = [
   {
     img_src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmH2idwWd2ApYiu_xNk4VEJt_XCv4cIyaY3w&s",
-    title: "Sustainable Cocoa: The Future of Chocolate",
-    summary: "Discover how we are revolutionizing the cocoa industry through organic practices and solar-integrated farm management.",
+    title: "The Golden Bean: Future of Cocoa",
+    summary: "Exploring how sustainable techniques are doubling yields in the tropical belt.",
     timestamp: "2026-02-25T14:30:00Z"
   },
   {
     img_src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSClSJwIagbRaUZiEJ72i3r1wTa6K082LH9yQ&s",
-    title: "Cashew Harvesting Techniques",
-    summary: "Learn about the precision required to harvest and process the highest grade cashew nuts for global export.",
-    timestamp: "2026-02-20T10:00:00Z"
+    title: "Cashew Harvesting Secrets",
+    summary: "How our precision drying methods ensure premium grade cashew nuts.",
+    timestamp: "2026-02-26T09:00:00Z"
   }
 ];
 
-const CALENDAR_DATA = {
-  month_year: "022026",
-  activities: ["Planting Cocoa Trees", "Cashew Harvesting"]
+const CALENDAR_DATA = [
+  {
+    month_year: "052026",
+    activities: ["Pruning Cocoa Trees", "Soil Enrichment with Bio-char"]
+  },
+  {
+    month_year: "112026",
+    activities: ["Peak Cashew Harvesting", "Main Crop Cocoa Fermentation"]
+  }
+];
+
+const BID_PRODUCTS = [
+  { product_name: "Cocoa", units_produced: 500000, units_reserved: 100000 },
+  { product_name: "Cashew", units_produced: 250000, units_reserved: 50000 }
+];
+
+// --- UTILS ---
+const formatMonthYear = (my: string): string => {
+  const month = parseInt(my.substring(0, 2));
+  const year = parseInt(my.substring(2));
+  const date = new Date(year, month - 1);
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 };
 
-const BID_DATA = {
-  products: [
-    { product_name: "Cocoa", units_produced: 500000, units_reserved: 100000 },
-    { product_name: "Cashew", units_produced: 250000, units_reserved: 50000 },
-  ]
-};
+const calculateAvailability = (prod: number, res: number): string =>
+  ((prod - res) / prod * 100).toFixed(0);
 
 // --- COMPONENTS ---
 
-const GlassCard = ({ children, className = "" }: GlassCardProps) => (
-  <div className={`backdrop-blur-md bg-white/10 dark:bg-black/20 border border-white/20 rounded-2xl ${className}`}>
-    {children}
-  </div>
-);
+interface CounterProps {
+  value: number;
+  label: string;
+  suffix?: string;
+}
 
-const AnimatedNumber = ({ value }: AnimatedNumberProps) => {
+const Counter: React.FC<CounterProps> = ({ value, label, suffix = "" }) => {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (isInView) {
-      let start = 0;
-      const duration = 2000;
-      const stepTime = Math.abs(Math.floor(duration / value));
-      const timer = setInterval(() => {
-        start += 1;
-        setCount(start);
-        if (start >= value) clearInterval(timer);
-      }, stepTime);
-      return () => clearInterval(timer);
-    }
-  }, [isInView, value]);
+    let start = 0;
+    const end = value;
+    const duration = 2000;
+    let timer;
 
-  return <span ref={ref}>{count}</span>;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        let startTime: number | null = null;
+        const animate = (currentTime: number) => {
+          if (!startTime) startTime = currentTime;
+          const progress = Math.min((currentTime - startTime) / duration, 1);
+          setCount(Math.floor(progress * (end - start) + start));
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        };
+        requestAnimationFrame(animate);
+        observer.disconnect();
+      }
+    });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [value]);
+
+  return (
+    <div ref={ref} className="text-center p-6 glass-card rounded-2xl">
+      <div className="text-4xl md:text-5xl font-bold text-cocoa-main mb-2">
+        {count}{suffix}
+      </div>
+      <div className="text-sm uppercase tracking-widest text-gray-500 dark:text-gray-400">
+        {label.replace(/_/g, ' ')}
+      </div>
+    </div>
+  );
 };
 
-const ThemeToggle = ({ theme, toggleTheme }: ThemeToggleProps) => (
-  <button 
-    onClick={toggleTheme}
-    className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 transition-all hover:scale-110"
-  >
-    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-  </button>
-);
+interface NavItemType {
+  title: string;
+  link: string;
+  submenu?: NavItemType[];
+}
 
-const DropdownMenu = ({ item, isMobile = false }: DropdownMenuProps) => {
+interface NavItemProps {
+  item: NavItemType;
+}
+const NavItem: React.FC<NavItemProps> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const hasSub = item.submenu && item.submenu.length > 0;
-
   return (
     <div 
       className="relative group"
-      onMouseEnter={() => !isMobile && setIsOpen(true)}
-      onMouseLeave={() => !isMobile && setIsOpen(false)}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
     >
-      <button 
-        onClick={() => isMobile && setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-3 py-2 text-sm font-medium hover:text-amber-500 transition-colors"
-      >
+      <button className="flex items-center gap-1 py-4 px-3 text-sm font-medium hover:text-green-600 transition-colors">
         {item.title}
-        {hasSub && <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
+        {item.submenu && item.submenu.length > 0 && (
+          <ChevronDown
+            size={14}
+            className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
+        )}
       </button>
       
       <AnimatePresence>
-        {isOpen && hasSub && (
-          <motion.div
+        {isOpen && item.submenu && item.submenu.length > 0 && (
+          <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className={`${isMobile ? 'relative pl-4' : 'absolute left-0 top-full pt-2'} min-w-[200px] z-50`}
+            className="absolute top-full left-0 w-64 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl rounded-xl border border-white/20 p-2 z-50"
           >
-            <GlassCard className="p-2 shadow-xl border-amber-500/20 bg-white/90 dark:bg-neutral-900/90">
-              {item.submenu?.map((sub: NavItem, idx: number) => (
-                <div key={idx} className="relative group/sub">
-                  <a 
-                    href={sub.link}
-                    className="flex items-center justify-between p-2 text-sm rounded-lg hover:bg-amber-500/10 hover:text-amber-600"
-                  >
-                    {sub.title}
-                    {sub.submenu && <ChevronRight size={14} />}
-                  </a>
-                  {sub.submenu && (
-                    <div className="hidden group-hover/sub:block absolute left-full top-0 pl-2">
-                       <GlassCard className="p-2 min-w-[180px]">
-                         {sub.submenu.map((s, i) => (
-                           <a key={i} href={s.link} className="block p-2 text-sm hover:text-amber-500">{s.title}</a>
-                         ))}
-                       </GlassCard>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </GlassCard>
+            {item.submenu?.map((sub, idx) => (
+              <div key={idx} className="relative group/sub">
+                <a href={sub.link} className="block px-4 py-3 text-sm rounded-lg hover:bg-cocoa-50 dark:hover:bg-cocoa-900/20 transition-all flex justify-between items-center">
+                  {sub.title}
+                  {sub.submenu && <ChevronDown size={12} className="-rotate-90 opacity-40" />}
+                </a>
+                {sub.submenu && (
+                  <div className="hidden group-hover/sub:block absolute left-full top-0 ml-1 w-56 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl rounded-xl border border-white/20 p-2">
+                    {sub.submenu.map((s, i) => (
+                      <a key={i} href={s.link} className="block px-4 py-2 text-sm rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20">
+                        {s.title}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -226,151 +226,185 @@ const DropdownMenu = ({ item, isMobile = false }: DropdownMenuProps) => {
 };
 
 export default function App() {
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatHistory, setChatHistory] = useState([{ type: 'bot', text: 'Welcome to Bluewave! How can we help you today?' }]);
-  const [inputMsg, setInputMsg] = useState('');
-useEffect(() => {
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}, [theme]);
-  // Auto Theme based on time (6PM to 6AM = dark)
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([
+    { role: 'bot', text: 'Welcome to Bluewave. How can we help you with your cocoa or cashew inquiries today?' }
+  ]);
+
+  // Handle time-based theme
   useEffect(() => {
     const hour = new Date().getHours();
-    setTheme((hour >= 18 || hour < 6) ? 'dark' : 'light');
+    if (hour < 6 || hour > 18) setIsDark(true);
   }, []);
 
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  const rotateX = useTransform(scrollYProgress, [0, 1], [0, 15]);
-
-  const handleSendChat = () => {
-    if (!inputMsg.trim()) return;
-    setChatHistory([...chatHistory, { type: 'user', text: inputMsg }]);
-    setInputMsg('');
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    setChatHistory([...chatHistory, { role: 'user', text: chatInput }]);
+    setChatInput("");
     setTimeout(() => {
-      setChatHistory(prev => [...prev, { type: 'bot', text: "Thank you for reaching out. A Bluewave representative will be with you shortly." }]);
+      setChatHistory(prev => [...prev, { role: 'bot', text: "Thank you for your message. An expert from our global trade team will reach out shortly." }]);
     }, 1000);
   };
 
   return (
-    <div className={theme}>
-      <div className="bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 min-h-screen selection:bg-amber-500 selection:text-white overflow-x-hidden font-sans">
+    <div className={`${isDark ? 'dark' : ''} selection:bg-cocoa-200 selection:text-cocoa-900`}>
+      <div className="bg-beige-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-500 font-sans overflow-x-hidden">
         
-        {/* Progress Bar */}
-        <motion.div className="fixed top-0 left-0 right-0 h-1 bg-amber-600 z-[100] origin-left" style={{ scaleX }} />
+        {/* CSS VARS FOR THEME */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            --cocoa: #5C3D2E;
+            --green: #2D5A27;
+            --beige: #F4F1EA;
+          }
+          .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          .dark .glass-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+          }
+          .text-cocoa-main { color: #5C3D2E; }
+          .dark .text-cocoa-main { color: #D7A86E; }
+          .bg-cocoa-main { background-color: #5C3D2E; }
+          .bg-green-main { background-color: #2D5A27; }
+          @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+          }
+          .animate-blob {
+            animation: blob 7s infinite;
+          }
+          .animation-delay-2000 { animation-delay: 2s; }
+          .animation-delay-4000 { animation-delay: 4s; }
+        `}} />
 
-        {/* --- NAVIGATION --- */}
-        <nav className="fixed top-0 w-full z-[90] transition-all px-6 py-4">
-          <GlassCard className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3 border-amber-500/10">
+        {/* NAVIGATION */}
+        <nav className="fixed top-0 left-0 w-full z-[100] px-4 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between glass-card px-6 py-2 rounded-2xl shadow-lg border border-white/20 dark:border-gray-800/50">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-600/20">
-                <Leaf className="text-white" size={24} />
-              </div>
-              <span className="text-xl font-bold tracking-tighter bg-gradient-to-r from-amber-600 to-amber-800 bg-clip-text text-transparent">
-                BLUEWAVE
-              </span>
+              <div className="w-10 h-10 bg-cocoa-main rounded-lg flex items-center justify-center text-white font-bold text-xl">B</div>
+              <span className="font-bold text-xl tracking-tight hidden sm:block">Bluewave</span>
             </div>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-4">
-              {NAV_DATA.map((item, idx) => (
-                <DropdownMenu key={idx} item={item} />
-              ))}
-              <div className="h-6 w-px bg-neutral-300 dark:bg-neutral-700 mx-2" />
-              <ThemeToggle theme={theme} toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
-              <button className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-full text-sm font-semibold transition-all shadow-md">
-                Get Started
-              </button>
+            <div className="hidden lg:flex items-center gap-1">
+              {NAVIGATION_DATA.map((item, i) => <NavItem key={i} item={item} />)}
             </div>
 
-            {/* Mobile Nav Trigger */}
-            <div className="lg:hidden flex items-center gap-3">
-              <ThemeToggle theme={theme} toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} />
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
-                {isMenuOpen ? <X /> : <Menu />}
-              </button>
-            </div>
-          </GlassCard>
-
-          {/* Mobile Menu Overlay */}
-          <AnimatePresence>
-            {isMenuOpen && (
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                className="fixed inset-0 bg-neutral-50 dark:bg-neutral-950 z-[100] p-8 lg:hidden overflow-y-auto"
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsDark(!isDark)}
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
-                <div className="flex justify-between items-center mb-10">
-                  <div className="text-2xl font-bold text-amber-600">Bluewave</div>
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2 border rounded-full"><X /></button>
-                </div>
-                <div className="space-y-4">
-                  {NAV_DATA.map((item, idx) => (
-                    <div key={idx} className="border-b border-neutral-200 dark:border-neutral-800 pb-2">
-                      <DropdownMenu item={item} isMobile={true} />
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button className="bg-cocoa-main text-white px-5 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all hidden md:block">
+                Inquire Now
+              </button>
+              <button 
+                className="lg:hidden p-2"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X /> : <Menu />}
+              </button>
+            </div>
+          </div>
         </nav>
 
-        {/* --- HERO SECTION --- */}
-        <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        {/* MOBILE MENU */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="fixed inset-0 z-[90] bg-white dark:bg-gray-950 p-8 pt-24 overflow-y-auto"
+            >
+              <div className="flex flex-col gap-6">
+                {NAVIGATION_DATA.map((item, i) => (
+                  <div key={i} className="border-b border-gray-100 dark:border-gray-800 pb-4">
+                    <div className="text-xl font-bold mb-2">{item.title}</div>
+                    <div className="pl-4 flex flex-col gap-2">
+                      {item.submenu?.map((sub, j) => (
+                        <a key={j} href={sub.link} className="text-gray-500 dark:text-gray-400">{sub.title}</a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* HERO SECTION */}
+        <section className="relative min-h-screen pt-32 pb-20 flex flex-col items-center justify-center overflow-hidden">
+          {/* Animated Background Blobs */}
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-cocoa-200/30 dark:bg-cocoa-900/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-green-200/30 dark:bg-green-900/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-yellow-200/30 dark:bg-yellow-900/20 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 text-xs font-bold tracking-widest uppercase mb-6">
-                <Globe size={14} /> Global Multi-Business Enterprise
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold mb-6 tracking-widest uppercase">
+                <Leaf size={14} /> Sustainable Farming Leaders
               </div>
-              <h1 className="text-5xl lg:text-7xl font-black mb-6 leading-tight">
-                Sustainable <span className="text-amber-600">Agro-Futures</span> For The World.
+              <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-8">
+                Revolutionizing <span className="text-cocoa-main">Agriculture</span> for the Next Gen.
               </h1>
-              <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-8 max-w-lg leading-relaxed">
-                Empowering international trade through ethically sourced Cocoa and premium Cashew. We blend traditional farming wisdom with futuristic logistics.
+              <p className="text-xl text-gray-600 dark:text-gray-400 mb-10 leading-relaxed max-w-lg">
+                At Bluewave, we bridge the gap between traditional soil wisdom and modern trade efficiency. 
+                Premium cocoa and cashews, cultivated with care for global excellence.
               </p>
               <div className="flex flex-wrap gap-4">
-                <button className="bg-amber-600 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 shadow-xl shadow-amber-600/30 hover:-translate-y-1 transition-transform">
-                  Explore Products <ArrowRight size={20} />
+                <button className="bg-cocoa-main text-white px-8 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-2">
+                  View Catalog <ArrowRight size={20} />
                 </button>
-                <button className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-8 py-4 rounded-xl font-bold hover:bg-neutral-50 transition-colors">
-                  Contact Sales
+                <button className="bg-white/50 dark:bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl font-bold text-lg border border-white/20 hover:bg-white/80 transition-all">
+                  Our Partnerships
                 </button>
               </div>
             </motion.div>
 
-            <motion.div 
-              className="relative group"
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
               transition={{ duration: 1 }}
+              className="relative group"
             >
-              <div className="absolute inset-0 bg-amber-600 rounded-[3rem] rotate-6 blur-3xl opacity-20 group-hover:opacity-30 transition-opacity" />
-              <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl aspect-[4/5]">
+              <div className="absolute inset-0 bg-gradient-to-tr from-cocoa-main/20 to-green-main/20 rounded-[2.5rem] blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
+              <div className="relative aspect-video rounded-[2rem] overflow-hidden border-4 border-white/50 shadow-2xl bg-black">
+                {/* Standalone Video Mockup */}
                 <video 
-                  autoPlay loop muted playsInline 
-                  className="w-full h-full object-cover"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  className="w-full h-full object-cover opacity-80"
                 >
                   <source src="/Video.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-8">
-                  <div className="flex items-center gap-4 text-white">
-                    <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl border border-white/20">
-                      <TrendingUp size={24} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30">
+                      <Play size={24} fill="white" />
                     </div>
                     <div>
-                      <p className="text-sm opacity-80 uppercase tracking-tighter">Live Yield Growth</p>
-                      <p className="text-2xl font-bold">+12.4% Annual Increase</p>
+                      <h4 className="font-bold text-white">Experience Bluewave</h4>
+                      <p className="text-white/60 text-sm">Direct from our fields in Africa</p>
                     </div>
                   </div>
                 </div>
@@ -379,297 +413,292 @@ useEffect(() => {
           </div>
         </section>
 
-        {/* --- METRICS / ABOUT --- */}
-        <section className="py-24 bg-neutral-100 dark:bg-neutral-900/50">
+        {/* METRICS SECTION */}
+        <section className="py-24 bg-beige-100 dark:bg-gray-900 transition-colors">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { label: "Hectares Managed", value: METRICS.hectares_under_management, icon: <Leaf /> },
-                { label: "Cocoa Yield (Tons)", value: METRICS.annual_cocoa_yield, icon: <Sprout /> },
-                { label: "Cashew Yield (Tons)", value: METRICS.annual_cashew_yield, icon: <Package /> },
-                { label: "Trade Partners", value: METRICS.number_of_global_trade_partners, icon: <Globe /> }
-              ].map((m, i) => (
-                <GlassCard key={i} className="p-8 text-center group hover:border-amber-500/50 transition-all cursor-default">
-                  <div className="w-14 h-14 bg-amber-600/10 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                    {m.icon}
-                  </div>
-                  <h3 className="text-4xl font-black mb-2"><AnimatedNumber value={m.value} />+</h3>
-                  <p className="text-sm text-neutral-500 uppercase tracking-widest">{m.label}</p>
-                </GlassCard>
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <Counter value={METRICS.hectares_under_management} label="Hectares Managed" suffix="+" />
+              <Counter value={METRICS.annual_cocoa_yield} label="Annual Cocoa Yield" suffix=" MT" />
+              <Counter value={METRICS.annual_cashew_yield} label="Annual Cashew Yield" suffix=" MT" />
+              <Counter value={METRICS.number_of_global_trade_partners} label="Global Trade Partners" />
             </div>
-            
-            <div className="mt-20 flex flex-col lg:flex-row gap-16 items-center">
-              <div className="lg:w-1/2">
-                <h2 className="text-4xl font-bold mb-6">Our Legacy, Your Growth.</h2>
-                <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-6 leading-relaxed">
-                  At Bluewave Multi Business Enterprises, we are more than a farm; we are an ecosystem. Our expansive hectares are cultivated using regenerative agriculture that ensures soil health for decades to come. 
-                </p>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-green-500/10 p-2 rounded-lg text-green-600 mt-1"><ShieldCheck size={20} /></div>
-                    <div>
-                      <h4 className="font-bold">Quality Guaranteed</h4>
-                      <p className="text-sm opacity-70">Every bean and nut is graded to international standards (Grade A++).</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="bg-blue-500/10 p-2 rounded-lg text-blue-600 mt-1"><Users size={20} /></div>
-                    <div>
-                      <h4 className="font-bold">Community Led</h4>
-                      <p className="text-sm opacity-70">Empowering 500+ local farming families with fair-trade agreements.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="lg:w-1/2 grid grid-cols-2 gap-4">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCeXdxw9EUpejKplzPm5skPcFzCiyvcC9QmA&s" className="rounded-3xl shadow-lg hover:scale-105 transition-transform" alt="Cocoa" />
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHeyZoIO9cW_O8JZw02Fozco2-aAWdqz9iQg&s" className="rounded-3xl shadow-lg translate-y-8 hover:scale-105 transition-transform" alt="Cashew" />
-              </div>
+            <div className="mt-20 max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl font-bold mb-6">Empowering Local Ecosystems</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400">
+                Bluewave Multi Business Enterprises isn't just a farm; it's a hub for economic revitalization. 
+                We manage over 15 hectares of prime arable land using bio-regenerative techniques that restore the soil while producing 
+                world-class export-grade raw materials. Our global partners rely on us for consistency, quality, and ethical transparency.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* --- PRODUCTS & BIDDING --- */}
-        <section className="py-24 relative">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter italic">Live Stock Availability</h2>
-              <p className="text-neutral-500">Real-time inventory for global commodity investors.</p>
+        {/* INVESTOR PITCH SECTIONS (ADDITIONAL SECTIONS) */}
+        <section className="py-24 bg-white dark:bg-gray-950">
+          <div className="max-w-7xl mx-auto px-6 space-y-32">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}>
+                <h3 className="text-4xl font-bold mb-6 flex items-center gap-3">
+                  <div className="w-12 h-1 bg-green-main rounded"></div> Precision Sourcing
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-lg mb-6 leading-relaxed">
+                  Investors choose us because we control the entire vertical stack. From high-yielding seedling distribution 
+                  to post-harvest fermentation monitoring, we ensure that every kilogram of cocoa meets the strict 
+                  Standard Quality benchmarks of international markets.
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
+                  Our cashew operations leverage automated sorting and specialized moisture-controlled storage facilities, 
+                  reducing waste by 35% compared to regional averages.
+                </p>
+              </motion.div>
+              <div className="rounded-[2.5rem] overflow-hidden shadow-2xl hover:scale-105 transition-transform duration-500 border-8 border-beige-200 dark:border-gray-800">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCeXdxw9EUpejKplzPm5skPcFzCiyvcC9QmA&s" alt="Cocoa Farm" className="w-full h-full object-cover aspect-video" />
+              </div>
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-8">
-              {BID_DATA.products.map((p, i) => {
-                const percentage = Math.round(((p.units_produced - p.units_reserved) / p.units_produced) * 100);
-                return (
-                  <GlassCard key={i} className="p-8 flex flex-col md:flex-row gap-8 items-center border-amber-600/30">
-                    <div className="relative w-40 h-40">
-                      <svg className="w-full h-full" viewBox="0 0 100 100">
-                        <circle className="text-neutral-200 dark:text-neutral-800" strokeWidth="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
-                        <motion.circle 
-                          className="text-amber-600" 
-                          strokeWidth="10" 
-                          strokeDasharray={251.2}
-                          initial={{ strokeDashoffset: 251.2 }}
-                          whileInView={{ strokeDashoffset: 251.2 - (251.2 * percentage) / 100 }}
-                          transition={{ duration: 1.5, ease: "easeOut" }}
-                          strokeLinecap="round" 
-                          stroke="currentColor" 
-                          fill="transparent" 
-                          r="40" cx="50" cy="50" 
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <span className="text-2xl font-black">{percentage}%</span>
-                        <span className="text-[10px] uppercase font-bold opacity-60">Left</span>
+
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
+              <div className="order-2 lg:order-1 rounded-[2.5rem] overflow-hidden shadow-2xl hover:scale-105 transition-transform duration-500 border-8 border-cocoa-100 dark:border-gray-800">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHeyZoIO9cW_O8JZw02Fozco2-aAWdqz9iQg&s" alt="Cashew Farm" className="w-full h-full object-cover aspect-video" />
+              </div>
+              <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} className="order-1 lg:order-2">
+                <h3 className="text-4xl font-bold mb-6 flex items-center gap-3">
+                   Scaling Global Impact <div className="w-12 h-1 bg-cocoa-main rounded"></div>
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-lg mb-6 leading-relaxed">
+                  We are actively expanding our trade network across North America and Europe. By integrating 
+                  IoT-enabled farm monitoring, we provide real-time yield predictions to our off-take partners, 
+                  ensuring supply chain reliability even in fluctuating seasons.
+                </p>
+                <ul className="space-y-4">
+                  {['Ethical Labor Certification', 'Blockchain Traceability Ready', 'Zero-Deforestation Commitment'].map((item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600">
+                        <Zap size={14} />
                       </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* BID AVAILABILITY SECTION */}
+        <section className="py-24 bg-cocoa-main text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+          </div>
+          <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+            <h2 className="text-4xl font-extrabold mb-12">Live Harvest Availability</h2>
+            <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+              {BID_PRODUCTS.map((prod, i) => {
+                const perc = calculateAvailability(prod.units_produced, prod.units_reserved);
+                return (
+                  <motion.div 
+                    key={i} 
+                    whileHover={{ scale: 1.05 }}
+                    className="bg-white/10 backdrop-blur-xl rounded-3xl p-10 border border-white/20"
+                  >
+                    <div className="text-6xl font-black mb-4">{perc}%</div>
+                    <div className="text-2xl font-bold mb-6">{prod.product_name} Stock Available</div>
+                    <div className="w-full h-3 bg-white/20 rounded-full mb-8 overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${perc}%` }}
+                        className="h-full bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                      ></motion.div>
                     </div>
-                    <div className="flex-1 text-center md:text-left">
-                      <h3 className="text-3xl font-black mb-2">{p.product_name}</h3>
-                      <p className="text-neutral-500 text-sm mb-6">Total Harvest: {p.units_produced.toLocaleString()} Units</p>
-                      <button className="w-full md:w-auto bg-neutral-900 dark:bg-neutral-50 dark:text-neutral-950 text-neutral-50 px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2">
-                        Bid Now <TrendingUp size={18} />
-                      </button>
-                    </div>
-                  </GlassCard>
+                    <button className="w-full bg-white text-cocoa-main py-4 rounded-xl font-bold hover:bg-beige-50 transition-colors">
+                      Place Bid Now
+                    </button>
+                  </motion.div>
                 );
               })}
             </div>
           </div>
         </section>
 
-        {/* --- SEASONAL CALENDAR --- */}
-        <section className="py-24 bg-amber-600 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full blur-[100px] -mr-48 -mt-48" />
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-12">
-              <div className="lg:w-1/3">
-                <Calendar size={60} className="mb-6 opacity-50" />
-                <h2 className="text-5xl font-black mb-4">Season {CALENDAR_DATA.month_year.slice(2)}</h2>
-                <p className="text-amber-100 text-lg">February Cycle Activities. Our precision farming follows a strict seasonal calendar for maximum nutrient density.</p>
+        {/* SEASONAL CALENDAR SECTION */}
+        <section className="py-24 bg-beige-50 dark:bg-gray-900 transition-colors">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+              <div className="max-w-xl">
+                <h2 className="text-4xl font-extrabold mb-4">Farm Operations Hub</h2>
+                <p className="text-gray-600 dark:text-gray-400">Our meticulous seasonal planning ensures we deliver products at their nutritional and flavor peak.</p>
               </div>
-              <div className="lg:w-2/3 flex flex-wrap gap-4">
-                {CALENDAR_DATA.activities.map((act, i) => (
-                  <motion.div 
-                    key={i}
-                    whileHover={{ scale: 1.05 }}
-                    className="flex-1 min-w-[300px] bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[2rem] flex items-center gap-6"
-                  >
-                    <div className="text-6xl font-black opacity-20">0{i+1}</div>
-                    <div className="text-2xl font-bold">{act}</div>
-                  </motion.div>
-                ))}
-                <button className="flex-1 min-w-[300px] border-2 border-dashed border-white/30 rounded-[2rem] flex items-center justify-center text-xl font-bold hover:bg-white hover:text-amber-600 transition-all">
-                  View Full Calendar
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- BLOG SECTION --- */}
-        <section className="py-24 px-6 bg-white dark:bg-neutral-950">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-end mb-16">
-              <div>
-                <h2 className="text-4xl font-black mb-4">Bluewave Intelligence</h2>
-                <p className="text-neutral-500">Market trends and farming breakthroughs.</p>
-              </div>
-              <button className="hidden md:flex items-center gap-2 text-amber-600 font-bold hover:gap-4 transition-all">
-                All Stories <ArrowRight size={20} />
+              <button className="flex items-center gap-2 text-cocoa-main dark:text-cocoa-200 font-bold border-b-2 border-cocoa-main py-1">
+                View Full Season Calendar <Calendar size={18} />
               </button>
             </div>
             
-            <div className="grid lg:grid-cols-2 gap-10">
-              {BLOGS.map((blog, idx) => (
-                <motion.div 
-                  key={idx}
-                  whileHover={{ y: -10 }}
-                  className="flex flex-col md:flex-row gap-6 bg-neutral-50 dark:bg-neutral-900/50 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800"
-                >
-                  <img src={blog.img_src} className="w-full md:w-56 h-56 object-cover rounded-2xl" alt={blog.title} />
-                  <div className="flex flex-col justify-between py-2">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-3 group-hover:text-amber-600 transition-colors">{blog.title}</h3>
-                      <p className="text-neutral-500 text-sm line-clamp-3 leading-relaxed">{blog.summary}</p>
-                    </div>
-                    <button className="text-amber-600 font-bold flex items-center gap-2 mt-4">Read Full Article <ArrowRight size={16}/></button>
+            <div className="grid md:grid-cols-2 gap-8">
+              {CALENDAR_DATA.map((cal, i) => (
+                <div key={i} className="glass-card p-8 rounded-[2rem] border-l-8 border-green-600">
+                  <div className="text-2xl font-bold mb-6 text-green-700 dark:text-green-400">
+                    {formatMonthYear(cal.month_year)}
                   </div>
+                  <ul className="space-y-4">
+                    {cal.activities.map((act, j) => (
+                      <li key={j} className="flex items-start gap-3">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-cocoa-main"></div>
+                        <span className="text-lg font-medium">{act}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* BLOGS SECTION */}
+        <section className="py-24 bg-white dark:bg-gray-950">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex justify-between items-center mb-12">
+              <h2 className="text-4xl font-extrabold">Knowledge Hub</h2>
+              <button className="text-sm font-bold bg-gray-100 dark:bg-gray-800 px-6 py-3 rounded-full hover:bg-cocoa-main hover:text-white transition-all">
+                Read All Articles
+              </button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-10">
+              {RECENT_BLOGS.map((blog, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  className="group cursor-pointer"
+                >
+                  <div className="rounded-[2.5rem] overflow-hidden mb-6 aspect-video shadow-xl relative">
+                    <img src={blog.img_src} alt={blog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <span className="text-white font-bold border-2 border-white px-6 py-2 rounded-full">Read Story</span>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 group-hover:text-cocoa-main transition-colors">{blog.title}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{blog.summary}</p>
                 </motion.div>
               ))}
             </div>
-            <button className="md:hidden w-full mt-10 bg-amber-600 text-white p-4 rounded-xl font-bold">See All Blogs</button>
           </div>
         </section>
 
-        {/* --- NEWSLETTER --- */}
+        {/* NEWSLETTER */}
         <section className="py-24 px-6">
-          <div className="max-w-5xl mx-auto">
-            <GlassCard className="p-12 text-center relative overflow-hidden bg-amber-600/5">
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-600/10 rounded-full blur-3xl" />
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-amber-600/10 rounded-full blur-3xl" />
-              
-              <Mail size={40} className="mx-auto mb-6 text-amber-600" />
-              <h2 className="text-3xl md:text-5xl font-black mb-6">Join the Wave</h2>
-              <p className="text-neutral-500 mb-10 max-w-xl mx-auto">Subscribe to our investor-exclusive newsletter for quarterly yield forecasts and market analysis.</p>
-              
-              <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
-                <div className="flex-1 relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                  <input type="text" placeholder="Full Name" className="w-full pl-12 pr-4 py-4 rounded-xl border dark:bg-neutral-800 dark:border-neutral-700 outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
-                </div>
-                <div className="flex-1 relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-                  <input type="email" placeholder="Email Address" className="w-full pl-12 pr-4 py-4 rounded-xl border dark:bg-neutral-800 dark:border-neutral-700 outline-none focus:ring-2 focus:ring-amber-500 transition-all" />
-                </div>
-                <button className="bg-amber-600 text-white px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform active:scale-95 shadow-lg shadow-amber-600/20">
-                  Subscribe
-                </button>
-              </div>
-            </GlassCard>
+          <div className="max-w-5xl mx-auto glass-card rounded-[3rem] p-12 text-center border-4 border-white/30 dark:border-gray-800 shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
+            <h2 className="text-4xl font-bold mb-6">Stay Planted in Progress</h2>
+            <p className="text-lg text-gray-500 dark:text-gray-400 mb-10">Join our newsletter for weekly trade insights and harvest availability alerts.</p>
+            <form className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+              <input type="text" placeholder="Your Name" className="flex-1 px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-cocoa-main outline-none" />
+              <input type="email" placeholder="Email Address" className="flex-1 px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-cocoa-main outline-none" />
+              <button className="bg-green-main text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all">Subscribe</button>
+            </form>
           </div>
         </section>
 
-        {/* --- FOOTER --- */}
-        <footer className="pt-24 pb-12 bg-neutral-900 text-neutral-400">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-10">
-            <div className="col-span-2">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
-                  <Leaf className="text-white" size={24} />
+        {/* FOOTER */}
+        <footer className="bg-gray-100 dark:bg-gray-950 pt-20 pb-10 border-t border-gray-200 dark:border-gray-900">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-8 mb-16">
+              <div className="col-span-2 md:col-span-4 lg:col-span-2">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 bg-cocoa-main rounded flex items-center justify-center text-white font-bold">B</div>
+                  <span className="font-bold text-lg">Bluewave Enterprises</span>
                 </div>
-                <span className="text-2xl font-bold text-white tracking-tighter">BLUEWAVE</span>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Cultivating excellence from the ground up. Join us in shaping a sustainable agricultural future.
+                </p>
+                <div className="flex gap-4">
+                  <a href="#" className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center hover:bg-cocoa-main hover:text-white transition-all">
+                    <Twitter size={18} />
+                  </a>
+                  <a href="#" className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center hover:bg-cocoa-main hover:text-white transition-all">
+                    <Linkedin size={18} />
+                  </a>
+                </div>
               </div>
-              <p className="max-w-xs mb-8 text-sm leading-relaxed">
-                Pioneering the future of global agricultural trade through innovation, ethics, and premium sourcing.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="p-2 bg-neutral-800 rounded-full hover:bg-amber-600 hover:text-white transition-colors"><Twitter size={20} /></a>
-                <a href="#" className="p-2 bg-neutral-800 rounded-full hover:bg-amber-600 hover:text-white transition-colors"><Linkedin size={20} /></a>
-              </div>
+              
+              {NAVIGATION_DATA.slice(1, 6).map((item, i) => (
+                <div key={i} className="col-span-1">
+                  <h4 className="font-bold mb-4 text-sm uppercase tracking-widest">{item.title}</h4>
+                  <ul className="space-y-2">
+                    {item.submenu?.map((sub, j) => (
+                      <li key={j}><a href={sub.link} className="text-sm text-gray-500 dark:text-gray-400 hover:text-cocoa-main transition-colors">{sub.title}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-            {NAV_DATA.filter(n => n.submenu.length > 0).slice(0, 4).map((col, i) => (
-              <div key={i}>
-                <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">{col.title}</h4>
-                <ul className="space-y-3 text-sm">
-                  {col.submenu.map((s, j) => (
-                    <li key={j}><a href={s.link} className="hover:text-amber-500 transition-colors">{s.title}</a></li>
-                  ))}
-                </ul>
+            <div className="pt-8 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-sm text-gray-500">© 2026 Bluewave Multi Business Enterprises. All rights reserved.</p>
+              <div className="flex gap-8">
+                <a href="#" className="text-sm text-gray-500">Privacy Policy</a>
+                <a href="#" className="text-sm text-gray-500">Terms of Service</a>
               </div>
-            ))}
-          </div>
-          <div className="max-w-7xl mx-auto px-6 border-t border-neutral-800 mt-20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs gap-4">
-            <p>© 2026 Bluewave Multi Business Enterprises. All Rights Reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-white">Privacy Policy</a>
-              <a href="#" className="hover:text-white">Terms of Trade</a>
-              <a href="#" className="hover:text-white">Cookies</a>
             </div>
           </div>
         </footer>
 
-        {/* --- FLOATING CHAT & WHATSAPP --- */}
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-4">
-          <AnimatePresence>
-            {isChatOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="w-[350px] h-[500px] shadow-2xl overflow-hidden mb-2"
-              >
-                <GlassCard className="h-full flex flex-col bg-white dark:bg-neutral-900 shadow-none border-amber-600/30">
-                  <div className="p-4 bg-amber-600 text-white flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><MessageCircle size={18}/></div>
-                      <span className="font-bold">Bluewave Support</span>
-                    </div>
-                    <button onClick={() => setIsChatOpen(false)}><X size={20}/></button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50 dark:bg-neutral-950">
-                    {chatHistory.map((msg, i) => (
-                      <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.type === 'user' ? 'bg-amber-600 text-white rounded-tr-none' : 'bg-neutral-200 dark:bg-neutral-800 rounded-tl-none'}`}>
-                          {msg.text}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-4 border-t dark:border-neutral-800 flex gap-2 items-center">
-                    <input 
-                      type="text" 
-                      value={inputMsg}
-                      onChange={(e) => setInputMsg(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSendChat()}
-                      placeholder="Type a message..." 
-                      className="flex-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg px-4 py-2 text-sm outline-none" 
-                    />
-                    <button onClick={handleSendChat} className="text-amber-600"><Send size={20}/></button>
-                  </div>
-                </GlassCard>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="flex gap-4 self-end">
-            <a 
-              href="https://wa.me/yournumber" 
-              target="_blank" 
-              rel="noreferrer"
-              className="w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform shadow-green-500/30"
-            >
-              <MessageCircle size={28} />
-            </a>
-            <button 
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className="w-14 h-14 bg-amber-600 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform shadow-amber-600/30"
-            >
-              {isChatOpen ? <X size={28} /> : <Send size={28} />}
-            </button>
-          </div>
+        {/* FLOATING ACTION BUTTONS */}
+        <div className="fixed bottom-8 right-8 z-[200] flex flex-col gap-4">
+          <a href="https://wa.me/your-link" target="_blank" className="w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+            <MessageCircle size={30} />
+          </a>
+          <button 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className="w-14 h-14 bg-cocoa-main text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform relative"
+          >
+            <Zap size={30} fill="white" />
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold">1</div>
+          </button>
         </div>
 
+        {/* CHATBOT MODAL */}
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 100, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 100, scale: 0.9 }}
+              className="fixed bottom-28 right-8 w-80 md:w-96 z-[200] bg-white dark:bg-gray-900 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-gray-100 dark:border-gray-800 overflow-hidden"
+            >
+              <div className="bg-cocoa-main p-6 text-white flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold">Bluewave Assistant</h3>
+                  <div className="flex items-center gap-1 text-xs text-green-300">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div> Online
+                  </div>
+                </div>
+                <button onClick={() => setIsChatOpen(false)}><X size={20} /></button>
+              </div>
+              <div className="h-80 overflow-y-auto p-4 flex flex-col gap-4 bg-gray-50 dark:bg-gray-950">
+                {chatHistory.map((chat, i) => (
+                  <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                      chat.role === 'user' 
+                        ? 'bg-cocoa-main text-white rounded-tr-none' 
+                        : 'bg-white dark:bg-gray-800 dark:text-gray-200 shadow-sm rounded-tl-none'
+                    }`}>
+                      {chat.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-100 dark:border-gray-800 flex gap-2">
+                <input 
+                  type="text" 
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about bulk cocoa prices..."
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full text-sm outline-none focus:ring-1 focus:ring-cocoa-main" 
+                />
+                <button type="submit" className="w-10 h-10 bg-cocoa-main text-white rounded-full flex items-center justify-center shrink-0">
+                  <Send size={18} />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
