@@ -1,640 +1,613 @@
 "use client";
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { 
-  Camera, 
-  Aperture, 
-  MonitorPlay, 
-  ArrowRight, 
-  Instagram, 
-  Twitter, 
-  Linkedin, 
-  Mail, 
-  GraduationCap, 
+  ChevronDown, 
   Menu, 
-  X,
-  Volume2,
-  VolumeX,
-  Maximize2
+  X, 
+  ArrowRight, 
+  Leaf, 
+  TrendingUp, 
+  Globe, 
+  Calendar, 
+  MessageCircle, 
+  Send,
+  Linkedin,
+  Twitter,
+  Droplets,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
-/* --- UTILITY HOOKS --- */
 
-// Hook for scroll position
-const useScroll = () => {
-  const [scrollY, setScrollY] = useState(0);
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  return scrollY;
+// --- DATA ---
+const NAV_DATA = [
+  { title: "Home", link: "/home", submenu: [] },
+  {
+    title: "About Us",
+    link: "/about-us",
+    submenu: [
+      { title: "Our Story", link: "/about-us/our-story" },
+      { title: "Mission/Vision", link: "/about-us/mission-vision" },
+      { title: "Team/Farmers", link: "/about-us/team-farmers" }
+    ]
+  },
+  {
+    title: "Farming Practice",
+    link: "/farming-practice",
+    submenu: [
+      {
+        title: "Crop Farming",
+        link: "/farming-practice/crop-farming",
+        submenu: [
+          { title: "Cocoa Farming", link: "/farming-practice/crop-farming/cocoa" },
+          { title: "Cashew Farming", link: "/farming-practice/crop-farming/cashew" }
+        ]
+      },
+      { title: "Sustainable Farming", link: "/farming-practice/sustainable-farming" },
+      { title: "Organic Farming", link: "/farming-practice/organic-farming" },
+      { title: "Farming Calendar", link: "/farming-practice/farming-calendar" }
+    ]
+  },
+  {
+    title: "Products",
+    link: "/products",
+    submenu: [
+      { title: "Cocoa Beans", link: "/products/cocoa-beans" },
+      { title: "Cashew Nuts", link: "/products/cashew-nuts" },
+      { title: "Quality & Grading", link: "/products/quality-grading" },
+      { title: "Packaging", link: "/products/packaging-bulk-orders" }
+    ]
+  },
+  {
+    title: "Services",
+    link: "/services",
+    submenu: [
+      { title: "Consultations", link: "/services/consultations-workshops" },
+      { title: "Farm Tours", link: "/services/farm-tours" }
+    ]
+  },
+  { title: "Bid/Reservation", link: "/bid-reservation", submenu: [] },
+  { title: "Knowledge/Blog", link: "/blog", submenu: [] },
+];
+
+const METRICS = {
+  hectares_under_management: 15,
+  annual_cocoa_yield: 200,
+  annual_cashew_yield: 500,
+  number_of_global_trade_partners: 4
 };
 
-// Hook for mouse position (for cursor effects)
-const useMousePosition = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const updateMousePosition = (ev: MouseEvent) => {
-    setMousePosition({ x: ev.clientX, y: ev.clientY });
-    };
+const BLOGS = [
+  {
+    img_src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmH2idwWd2ApYiu_xNk4VEJt_XCv4cIyaY3w&s",
+    title: "Sustainable Harvesting in 2026",
+    summary: "How Bluewave is revolutionizing cocoa yields through precision agriculture and soil regeneration.",
+    timestamp: "2026-02-25T14:30:00Z"
+  },
+  {
+    img_src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSClSJwIagbRaUZiEJ72i3r1wTa6K082LH9yQ&s",
+    title: "Global Cashew Markets",
+    summary: "A deep dive into why our grade-A cashew nuts are outperforming competitors in the European sector.",
+    timestamp: "2026-02-20T10:00:00Z"
+  }
+];
 
-    window.addEventListener('mousemove', updateMousePosition);
-    return () => window.removeEventListener('mousemove', updateMousePosition);
-  }, []);
-  return mousePosition;
+const CALENDAR = [
+  { month_year: "032026", activities: ["Peak Pruning", "Soil PH Analysis"] },
+  { month_year: "042026", activities: ["Irrigation Tuning", "Pollination Monitoring"] }
+];
+
+const BID_PRODUCTS = [
+  { product_name: "Cocoa", units_produced: 500000, units_reserved: 100000 },
+  { product_name: "Cashew", units_produced: 250000, units_reserved: 50000 }
+];
+
+// --- COMPONENTS ---
+
+const Counter = ({ value, duration = 2 }: { value: number; duration?: number }) => {
+  const [count, setCount] = useState(0);
+  const nodeRef = useRef(null);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) return;
+
+    let totalMiliseconds = duration * 1000;
+    let incrementTime = totalMiliseconds / end;
+
+    let timer = setInterval(() => {
+      start += 1;
+      setCount(start);
+      if (start === end) clearInterval(timer);
+    }, incrementTime);
+
+    return () => clearInterval(timer);
+  }, [value, duration]);
+
+  return <span>{count}</span>;
 };
 
-// Hook for Intersection Observer (Detect when element is in view)
-const useOnScreen = (
-  options?: IntersectionObserverInit
-): [React.RefObject<HTMLDivElement | null>, boolean] => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsVisible(entry.isIntersecting);
-    }, options);
-
-    if (ref.current) observer.observe(ref.current);
-
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
-  }, [options]);
-
-  return [ref, isVisible];
+type MenuItem = {
+  title: string;
+  link: string;
+  submenu?: MenuItem[];
 };
 
-
-/* --- SUB-COMPONENTS --- */
-
-const CustomCursor = () => {
-  const { x, y } = useMousePosition();
-  const [isHovering, setIsHovering] = useState(false);
-
-  useEffect(() => {
-    const handleMouseOver = (e: MouseEvent) => {
-    const target = e.target as HTMLElement | null;
-
-    if (
-        target &&
-        (target.tagName === 'A' ||
-        target.tagName === 'BUTTON' ||
-        target.closest('.interactive'))
-    ) {
-        setIsHovering(true);
-    } else {
-        setIsHovering(false);
-    }
-    };
-    window.addEventListener('mouseover', handleMouseOver);
-    return () => window.removeEventListener('mouseover', handleMouseOver);
-  }, []);
+const Dropdown = ({ item, depth = 0 }: { item: MenuItem; depth?: number }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const hasSub = item.submenu && item.submenu.length > 0;
 
   return (
     <div 
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999] hidden md:block mix-blend-difference"
+      className="relative group"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
     >
-      <div 
-        className="absolute rounded-full bg-white transition-transform duration-100 ease-out"
-        style={{
-          left: x,
-          top: y,
-          width: isHovering ? '64px' : '12px',
-          height: isHovering ? '64px' : '12px',
-          transform: 'translate(-50%, -50%)',
-          opacity: isHovering ? 0.8 : 1
-        }}
-      />
-      <div 
-        className="absolute rounded-full border border-white transition-all duration-300 ease-out"
-        style={{
-          left: x,
-          top: y,
-          width: isHovering ? '80px' : '40px',
-          height: isHovering ? '80px' : '40px',
-          transform: 'translate(-50%, -50%)',
-          opacity: 0.5
-        }}
-      />
+      <button className="flex items-center gap-1 py-4 px-3 text-sm font-medium hover:text-[#D4A373] transition-colors">
+        {item.title}
+        {hasSub && <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && hasSub && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className={`absolute left-0 top-full min-w-[200px] bg-white/90 backdrop-blur-md shadow-xl border border-white/20 rounded-xl overflow-hidden z-50`}
+          >
+            {item.submenu?.map((sub, idx) => (
+              <div key={idx} className="relative group/sub">
+                <a 
+                  href={sub.link}
+                  className="block px-4 py-3 text-sm text-[#4A3728] hover:bg-[#D4A373]/10 hover:text-[#8B5E3C] transition-all"
+                >
+                  {sub.title}
+                </a>
+                {sub.submenu && (
+                  <div className="pl-4 pb-2">
+                    {sub.submenu.map((s, i) => (
+                      <a key={i} href={s.link} className="block py-1 text-xs text-[#6A6B4E] hover:text-[#2D4F1E] pl-2 border-l border-[#D4A373]">
+                        {s.title}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-const NoiseOverlay = () => (
-  <div className="fixed inset-0 pointer-events-none z-[9998] opacity-[0.03] mix-blend-overlay">
-    <svg className="w-full h-full">
-      <filter id="noiseFilter">
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
-      </filter>
-      <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-    </svg>
-  </div>
-);
+export default function App() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatHistory, setChatHistory] = useState([{ type: 'bot', text: 'Hello! Welcome to Bluewave. How can I assist you with our farming products today?' }]);
+  const [message, setMessage] = useState('');
+  
+  const { scrollYProgress } = useScroll();
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.2]);
 
-const FluidBackground = () => (
-  <div className="fixed inset-0 -z-10 overflow-hidden bg-slate-50">
-    {/* Animated Blobs */}
-    <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob" />
-    <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob animation-delay-2000" />
-    <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] bg-indigo-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 animate-blob animation-delay-4000" />
-    <div className="absolute top-[40%] right-[30%] w-[40vw] h-[40vw] bg-sky-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob animation-delay-6000" />
-  </div>
-);
+  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+    setChatHistory([...chatHistory, { type: 'user', text: message }]);
+    setMessage('');
+    setTimeout(() => {
+      setChatHistory(prev => [...prev, { type: 'bot', text: 'Thank you for your inquiry. A representative will get back to you shortly!' }]);
+    }, 1000);
+  };
 
-interface NavBarProps {
-  isScrolled: boolean;
-}
-
-const NavBar = ({ isScrolled }: NavBarProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const formatMonth = (my: string) => {
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const m = parseInt(my.substring(0, 2)) - 1;
+    const y = my.substring(2);
+    return `${months[m]} ${y}`;
+  };
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'py-4' : 'py-8'}`}>
-      <div className={`mx-auto max-w-7xl px-6 flex justify-between items-center transition-all duration-500 
-        ${isScrolled ? 'bg-white/10 backdrop-blur-xl border border-white/20 rounded-full shadow-lg p-3 px-6' : 'bg-transparent'}`}>
-        
-        <div className="text-2xl font-bold tracking-tighter interactive cursor-pointer flex items-center gap-2 text-slate-800">
-          <Aperture className="w-6 h-6 animate-spin-slow text-blue-600" />
-          <span>EVEREST</span>
-        </div>
+    <div className="min-h-screen bg-[#FEFAE0] text-[#4A3728] font-sans selection:bg-[#D4A373] selection:text-white overflow-x-hidden">
+      
+      {/* --- NAVIGATION --- */}
+      <nav className="fixed top-0 w-full z-[100] bg-white/70 backdrop-blur-xl border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-tr from-[#8B5E3C] to-[#2D4F1E] rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">B</div>
+            <span className="font-extrabold text-xl tracking-tight uppercase">Bluewave</span>
+          </div>
 
-        <div className="hidden md:flex items-center gap-8">
-          {['Services', 'Portfolio', 'Students', 'Contact'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors interactive relative group">
-              {item}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
-            </a>
-          ))}
-          <button 
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-2 rounded-full hover:bg-white/20 interactive transition-colors text-slate-600"
-          >
-            {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          <div className="hidden lg:flex items-center gap-2">
+            {NAV_DATA.map((item, idx) => <Dropdown key={idx} item={item} />)}
+            <button className="ml-4 px-6 py-2.5 bg-[#8B5E3C] text-white rounded-full font-semibold hover:bg-[#6F4A30] transition-all shadow-md active:scale-95">
+              Get Started
+            </button>
+          </div>
+
+          <button className="lg:hidden" onClick={() => setIsMenuOpen(true)}>
+            <Menu className="text-[#8B5E3C]" />
           </button>
         </div>
+      </nav>
 
-        <button className="md:hidden text-slate-800 interactive" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X /> : <Menu />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className={`fixed inset-0 bg-white/95 backdrop-blur-xl z-40 transform transition-transform duration-500 ${isOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col items-center justify-center gap-8`}>
-        {['Services', 'Portfolio', 'Students', 'Contact'].map((item) => (
-          <a 
-            key={item} 
-            href={`#${item.toLowerCase()}`} 
-            onClick={() => setIsOpen(false)}
-            className="text-3xl font-light tracking-widest text-slate-800"
+      {/* --- MOBILE NAV --- */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            className="fixed inset-0 z-[110] bg-white p-8 flex flex-col"
           >
-            {item}
-          </a>
-        ))}
-      </div>
-    </nav>
-  );
-};
-
-interface ServiceCardProps {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  delay: number;
-}
-
-const ServiceCard = ({ icon: Icon, title, description, delay }: ServiceCardProps) => {
-  const [ref, isVisible] = useOnScreen({ threshold: 0.1 });
-
-  return (
-    <div 
-      ref={ref}
-      className={`group relative p-8 rounded-3xl overflow-hidden interactive transition-all duration-700 transform
-      ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {/* Glassmorphism Background */}
-      <div className="absolute inset-0 bg-white/40 backdrop-blur-lg border border-white/50 rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] transition-all duration-300 group-hover:bg-white/60 group-hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] group-hover:scale-[1.02]"></div>
-      
-      <div className="relative z-10 flex flex-col h-full justify-between">
-        <div>
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-            <Icon size={24} />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-800 mb-3">{title}</h3>
-          <p className="text-slate-600 leading-relaxed">{description}</p>
-        </div>
-        
-        <div className="mt-8 flex items-center gap-2 text-blue-600 font-semibold cursor-pointer group/link">
-          <span className="relative">
-            Learn More
-            <span className="absolute bottom-0 left-0 w-0 h-px bg-blue-600 transition-all duration-300 group-hover/link:w-full"></span>
-          </span>
-          <ArrowRight size={16} className="transform transition-transform group-hover/link:translate-x-1" />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface PortfolioItemProps {
-  src: string;
-  size: string;
-  speed: number;
-  title: string;
-  category: string;
-}
-
-const PortfolioItem = ({ src, size, speed, title, category }: PortfolioItemProps) => {
-  const scrollY = useScroll();
-  const [ref, isVisible] = useOnScreen({ threshold: 0 });
-  // Calculate parallax offset based on scroll position and speed factor
-  const offset = useRef(0);
-  
-  // Update offset only on client side to avoid hydration mismatch, simplified here
-  const parallaxY = (scrollY * speed) * 0.1;
-
-  return (
-    <div 
-      ref={ref}
-      className={`relative rounded-none overflow-hidden group interactive transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'} ${size}`}
-    >
-      <div className="absolute inset-0 z-20 bg-black/0 group-hover:bg-black/20 transition-colors duration-500"></div>
-      
-      <img 
-        src={src} 
-        alt={title} 
-        className="w-full h-full object-cover transform transition-transform duration-[1.5s] ease-out group-hover:scale-110"
-        style={{ transform: `scale(1.1) translateY(${parallaxY}px)` }} // Simple Parallax
-      />
-      
-      {/* Floating Info Card */}
-      <div className="absolute bottom-6 left-6 z-30 opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl shadow-lg">
-          <h4 className="text-white font-bold text-lg">{title}</h4>
-          <p className="text-blue-200 text-sm">{category}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* --- MAIN COMPONENT --- */
-
-export default function EverestStudio() {
-  const scrollY = useScroll();
-  const [loading, setLoading] = useState(true);
-
-  // Initial Load Animation
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 1500);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-slate-50 flex items-center justify-center z-[10000]">
-        <div className="relative">
-          <div className="w-24 h-24 border-4 border-blue-200 rounded-full animate-ping"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-             <Aperture className="w-10 h-10 text-blue-600 animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative min-h-screen text-slate-800 font-sans selection:bg-blue-500 selection:text-white overflow-x-hidden">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-        
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        
-        h1, h2, h3, h4, h5 {
-          font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animate-spin-slow {
-            animation: spin 8s linear infinite;
-        }
-      `}</style>
-
-      <CustomCursor />
-      <NoiseOverlay />
-      <FluidBackground />
-      <NavBar isScrolled={scrollY > 50} />
+            <div className="flex justify-between items-center mb-12">
+              <span className="font-bold text-xl">MENU</span>
+              <X onClick={() => setIsMenuOpen(false)} />
+            </div>
+            <div className="flex flex-col gap-6 overflow-y-auto">
+              {NAV_DATA.map((item, i) => (
+                <div key={i}>
+                  <a href={item.link} className="text-2xl font-bold hover:text-[#D4A373]">{item.title}</a>
+                  {item.submenu.map((s, j) => (
+                    <a key={j} href={s.link} className="block mt-2 ml-4 text-gray-500">{s.title}</a>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative h-screen flex items-center justify-center px-6 overflow-hidden">
-        <div className="relative z-10 text-center mix-blend-darken">
-          <div className="overflow-hidden mb-4">
-             <h2 className="text-blue-600 font-medium tracking-[0.5em] text-sm md:text-base animate-[slideUp_1s_ease-out]">
-               EST. 2025
-             </h2>
-          </div>
-          
-          <div className="relative">
-            <h1 className="text-[12vw] leading-[0.85] font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-slate-800 to-slate-500 animate-[fadeIn_1.5s_ease-out]">
-              EVEREST
-              <br />
-              <span className="text-stroke-thin opacity-50">STUDIO</span>
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden min-h-[90vh] flex flex-col items-center justify-center">
+        <motion.div 
+          style={{ scale }}
+          className="absolute top-20 right-[-10%] w-[500px] h-[500px] bg-[#D4A373]/10 rounded-full blur-3xl -z-10"
+        ></motion.div>
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E9EDC6] text-[#2D4F1E] text-xs font-bold uppercase tracking-widest mb-6">
+              <Leaf size={14} /> Global Agricultural Leaders
+            </div>
+            <h1 className="text-5xl lg:text-7xl font-black leading-[1.1] mb-8 text-[#4A3728]">
+              Cultivating <span className="text-[#8B5E3C]">Wealth</span> Through The Earth's Finest.
             </h1>
-            
-            {/* Decorative circles around text */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] border border-blue-500/10 rounded-full animate-[spin_20s_linear_infinite]"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[38vw] h-[38vw] border border-slate-900/5 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
-          </div>
-
-          <p className="mt-8 max-w-lg mx-auto text-lg text-slate-600 font-light animate-[fadeIn_2s_ease-out]">
-            Capturing the ethereal moments of life through a futuristic lens. 
-            Where memory meets imagination.
-          </p>
-
-          <div className="mt-12 flex justify-center gap-6 animate-[fadeIn_2.5s_ease-out]">
-            <button className="px-8 py-4 bg-slate-900 text-white rounded-full font-medium hover:bg-blue-600 transition-all duration-300 interactive shadow-xl hover:shadow-blue-500/25 transform hover:-translate-y-1">
-              Explore Portfolio
-            </button>
-            <button className="px-8 py-4 bg-white/50 backdrop-blur-sm border border-white text-slate-900 rounded-full font-medium hover:bg-white transition-all duration-300 interactive">
-              Book Session
-            </button>
-          </div>
-        </div>
-
-        {/* Floating Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-bounce">
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
-          <div className="w-px h-12 bg-gradient-to-b from-slate-800 to-transparent"></div>
-        </div>
-      </section>
-
-      {/* --- SERVICES BENTO GRID --- */}
-      <section id="services" className="relative py-32 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-20">
-            <h2 className="text-6xl font-bold tracking-tight text-slate-900 mb-6">Our Services</h2>
-            <div className="w-24 h-2 bg-blue-500 rounded-full"></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[minmax(300px,auto)]">
-            {/* Large Feature */}
-            <div className="md:col-span-2 row-span-2 rounded-3xl overflow-hidden relative group interactive h-[600px]">
-               <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" alt="Photoshoot" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-10 flex flex-col justify-end">
-                 <h3 className="text-4xl font-bold text-white mb-2">Professional Photoshoot</h3>
-                 <p className="text-gray-300 max-w-md">High-end fashion, portrait, and artistic photography in our state-of-the-art studio or on location.</p>
-                 <button className="mt-6 px-6 py-2 bg-white/10 backdrop-blur-md border border-white/30 text-white rounded-full w-fit hover:bg-white hover:text-black transition-all">Learn More</button>
-               </div>
+            <p className="text-lg text-[#6A6B4E] max-w-lg mb-10 leading-relaxed">
+              Bluewave Multi Business Enterprises bridges the gap between fertile African soils and the global market, specializing in premium Grade-A Cocoa and high-yield Cashew exports.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <button className="px-8 py-4 bg-[#2D4F1E] text-white rounded-xl font-bold shadow-2xl shadow-[#2D4F1E]/30 hover:bg-[#1A3012] transition-all flex items-center gap-3 group">
+                Invest Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button className="px-8 py-4 bg-white border-2 border-[#D4A373] text-[#8B5E3C] rounded-xl font-bold hover:bg-[#D4A373] hover:text-white transition-all">
+                Our Heritage
+              </button>
             </div>
+          </motion.div>
 
-            {/* Bento Cards */}
-            <ServiceCard 
-              icon={Camera}
-              title="Event Coverage"
-              description="Cinematic documentation of weddings, corporate galas, and cultural festivals with a documentary approach."
-              delay={100}
-            />
-            
-            <ServiceCard 
-              icon={MonitorPlay}
-              title="Space Rentage"
-              description="Access our minimal, naturally lit studio spaces equipped with professional lighting gears for your own creative projects."
-              delay={200}
-            />
-
-             <div className="md:col-span-1 rounded-3xl bg-blue-600 text-white p-8 flex flex-col justify-center relative overflow-hidden group interactive">
-                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
-                <h3 className="text-3xl font-bold mb-4 relative z-10">Custom Package?</h3>
-                <p className="text-blue-100 mb-6 relative z-10">Tailor make your experience. Let's discuss your specific needs.</p>
-                <ArrowRight className="w-8 h-8 relative z-10" />
-             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --- STUDENT SUBDOMAIN SECTION (Claymorphism/Neomorphism) --- */}
-      <section id="students" className="relative py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-[3rem] overflow-hidden bg-[#e0e5ec] shadow-[20px_20px_60px_#bebebe,-20px_-20px_60px_#ffffff] p-12 md:p-20 flex flex-col md:flex-row items-center gap-12 transform transition-transform hover:scale-[1.01] duration-500">
-            <div className="flex-1 z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-600 font-semibold mb-6">
-                <GraduationCap size={20} />
-                <span>Student Portal</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-                Matriculation & <br />Convocation
-              </h2>
-              <p className="text-slate-600 mb-8 text-lg">
-                Access your specialized student gallery. Find your matriculation photos, graduation ceremonies, and campus memories in a dedicated private vault.
-              </p>
-              <a 
-                href="#" 
-                className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-2xl shadow-[6px_6px_12px_#b8b9be,-6px_-6px_12px_#ffffff] hover:shadow-[inset_6px_6px_12px_#2563eb,-6px_-6px_12px_#3b82f6] transition-all duration-300 font-medium interactive group"
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="relative"
+          >
+            <div className="rounded-[2.5rem] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.15)] aspect-video border-8 border-white">
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-full h-full object-cover"
               >
-                Access Student Subdomain
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-              </a>
+                <source src="/Video.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
             </div>
-            
-            <div className="flex-1 relative w-full h-[400px]">
-              {/* Neomorphic floating elements */}
-              <div className="absolute top-10 left-10 w-48 h-64 bg-slate-100 rounded-2xl shadow-[10px_10px_20px_#d1d1d1,-10px_-10px_20px_#ffffff] rotate-[-6deg] z-10 overflow-hidden p-2">
-                 <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" className="w-full h-full object-cover rounded-xl" alt="Student" />
+            {/* Floating UI Elements */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ repeat: Infinity, duration: 4 }}
+              className="absolute -top-6 -right-6 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-full text-green-600"><TrendingUp /></div>
+                <div>
+                  <div className="text-xs font-bold text-gray-400 uppercase">Yield Growth</div>
+                  <div className="text-xl font-black text-[#2D4F1E]">+24% YoY</div>
+                </div>
               </div>
-              <div className="absolute top-20 left-32 w-48 h-64 bg-slate-100 rounded-2xl shadow-[10px_10px_20px_#d1d1d1,-10px_-10px_20px_#ffffff] rotate-[12deg] z-20 overflow-hidden p-2">
-                 <img src="https://images.unsplash.com/photo-1525921429624-479b6a26d84d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60" className="w-full h-full object-cover rounded-xl" alt="Graduation" />
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* --- METRICS SECTION --- */}
+      <section className="py-24 bg-[#CCD5AE] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { label: "Hectares Managed", value: METRICS.hectares_under_management, suffix: "k+", color: "#2D4F1E" },
+              { label: "Cocoa Yield (MT)", value: METRICS.annual_cocoa_yield, suffix: "k", color: "#8B5E3C" },
+              { label: "Cashew Yield (MT)", value: METRICS.annual_cashew_yield, suffix: "k", color: "#D4A373" },
+              { label: "Global Partners", value: METRICS.number_of_global_trade_partners, suffix: "", color: "#4A3728" },
+            ].map((m, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white/40 backdrop-blur-sm p-8 rounded-[2rem] border border-white/30 text-center"
+              >
+                <div className="text-4xl lg:text-5xl font-black mb-2" style={{ color: m.color }}>
+                  <Counter value={m.value} />{m.suffix}
+                </div>
+                <div className="text-sm font-bold text-[#4A3728]/70 uppercase tracking-widest leading-tight">
+                  {m.label}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --- VALUE PROP SECTION (The Multi Sections) --- */}
+      <section className="py-24 px-6 bg-[#FAEDCD]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-20 items-center mb-32">
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }}>
+              <h2 className="text-4xl lg:text-6xl font-black text-[#4A3728] mb-8">Direct From The <span className="text-[#8B5E3C]">Roots</span> Of Africa</h2>
+              <p className="text-lg text-[#6A6B4E] mb-6">
+                Our multi-business enterprise operates on the principles of <strong>Ethical Sourcing</strong> and <strong>Regenerative Agriculture</strong>. We don't just farm; we build ecosystems that sustain generations. By controlling every step of the supply chain, from the first seed in our 15,000-hectare nursery to the final shipping container, we guarantee 100% purity and unmatched quality.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { icon: <ShieldCheck className="text-[#2D4F1E]" />, title: "Certified Grading", desc: "Rigorous quality control for every ton produced." },
+                  { icon: <Globe className="text-[#D4A373]" />, title: "Export Ready", desc: "Logistics pipelines optimized for EU and Asian markets." },
+                  { icon: <Droplets className="text-[#8B5E3C]" />, title: "Tech-Driven", desc: "IoT monitoring for optimal moisture and crop health." }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-xl bg-white/30 border border-white/20">
+                    <div className="shrink-0 mt-1">{item.icon}</div>
+                    <div>
+                      <h4 className="font-bold text-[#4A3728]">{item.title}</h4>
+                      <p className="text-sm text-[#6A6B4E]">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              {/* Decorative floating shapes */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-              <div className="absolute bottom-10 left-10 w-32 h-32 bg-cyan-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+            </motion.div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 pt-12">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCeXdxw9EUpejKplzPm5skPcFzCiyvcC9QmA&s" className="rounded-3xl shadow-xl" alt="Farming" />
+                <div className="bg-[#D4A373] p-8 rounded-3xl text-white">
+                  <h3 className="text-2xl font-bold mb-2">Purity Guarantee</h3>
+                  <p className="text-sm opacity-90">Organic certification on 80% of current yield.</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-[#2D4F1E] p-8 rounded-3xl text-white">
+                  <h3 className="text-2xl font-bold mb-2">Sustainable</h3>
+                  <p className="text-sm opacity-90">Reducing carbon footprint through solar drying.</p>
+                </div>
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHeyZoIO9cW_O8JZw02Fozco2-aAWdqz9iQg&s" className="rounded-3xl shadow-xl" alt="Harvest" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- PORTFOLIO PARALLAX --- */}
-      <section id="portfolio" className="relative py-32 bg-slate-900 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.3),transparent_50%)]"></div>
+      {/* --- CALENDAR SECTION --- */}
+      <section className="py-24 bg-[#E9EDC6] px-6">
+        <div className="max-w-7xl mx-auto text-center mb-16">
+          <h2 className="text-4xl font-black text-[#2D4F1E] mb-4">Seasonal Intelligence</h2>
+          <p className="text-[#6A6B4E]">Transparency in our farming lifecycle.</p>
         </div>
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
+          {CALENDAR.map((item, i) => (
+            <div key={i} className="bg-white rounded-3xl p-10 shadow-lg border-b-8 border-[#D4A373]">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-[#FEFAE0] rounded-2xl flex items-center justify-center text-[#8B5E3C]"><Calendar size={32} /></div>
+                <h3 className="text-3xl font-black text-[#4A3728]">{formatMonth(item.month_year)}</h3>
+              </div>
+              <ul className="space-y-4 mb-8">
+                {item.activities.map((act, j) => (
+                  <li key={j} className="flex items-center gap-3 text-[#6A6B4E]">
+                    <div className="w-2 h-2 bg-[#2D4F1E] rounded-full"></div> {act}
+                  </li>
+                ))}
+              </ul>
+              <button className="text-[#8B5E3C] font-bold flex items-center gap-2 hover:underline">
+                View Full Season <ArrowRight size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <div className="max-w-7xl mx-auto px-6 mb-16 relative z-10 flex justify-between items-end">
-          <div>
-            <h2 className="text-7xl font-bold tracking-tighter mb-4">Selected<br/><span className="text-blue-500 italic">Work</span></h2>
+      {/* --- BID SECTION --- */}
+      <section className="py-24 bg-[#8B5E3C] text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+          <h2 className="text-4xl lg:text-6xl font-black mb-12">Limited Inventory Reservation</h2>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+            {BID_PRODUCTS.map((p, i) => {
+              const perc = ((p.units_produced - p.units_reserved) / p.units_produced) * 100;
+              return (
+                <div key={i} className="bg-white/10 backdrop-blur-md p-10 rounded-[2.5rem] border border-white/20">
+                  <h3 className="text-3xl font-bold mb-2">{p.product_name}</h3>
+                  <div className="text-[#E9EDC6] font-black text-6xl mb-6">{perc.toFixed(0)}%</div>
+                  <p className="text-white/70 text-sm mb-8 font-medium tracking-widest uppercase">Available for Bidding</p>
+                  <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden mb-8">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${perc}%` }}
+                      className="h-full bg-[#E9EDC6]"
+                    ></motion.div>
+                  </div>
+                  <button className="w-full py-4 bg-white text-[#8B5E3C] rounded-xl font-black hover:scale-[1.02] transition-transform">
+                    PLACE BID NOW
+                  </button>
+                </div>
+              );
+            })}
           </div>
-          <div className="hidden md:block">
-            <p className="text-right text-gray-400 max-w-xs">Drag to explore the visual journey. Click to expand.</p>
+        </div>
+      </section>
+
+      {/* --- BLOG SECTION --- */}
+      <section className="py-24 px-6 bg-[#FEFAE0]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-16">
+            <div>
+              <h2 className="text-4xl font-black text-[#4A3728] mb-4">Latest Insights</h2>
+              <p className="text-[#6A6B4E]">Market analysis and farming updates.</p>
+            </div>
+            <button className="hidden md:flex items-center gap-2 text-[#8B5E3C] font-bold group">
+              Go to Blog Page <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
+            </button>
+          </div>
+          <div className="grid md:grid-cols-2 gap-12">
+            {BLOGS.map((blog, i) => (
+              <motion.div 
+                key={i} 
+                whileHover={{ y: -10 }}
+                className="group cursor-pointer"
+              >
+                <div className="rounded-[2.5rem] overflow-hidden mb-8 shadow-2xl">
+                  <img src={blog.img_src} alt={blog.title} className="w-full aspect-[16/10] object-cover group-hover:scale-110 transition-transform duration-700" />
+                </div>
+                <h3 className="text-3xl font-black text-[#4A3728] mb-4 group-hover:text-[#8B5E3C] transition-colors">{blog.title}</h3>
+                <p className="text-[#6A6B4E] leading-relaxed mb-6">{blog.summary}</p>
+                <div className="flex items-center gap-2 text-sm font-bold text-[#8B5E3C]">
+                  Read Full Write-up <ExternalLink size={16} />
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Masonry Layout with different speeds */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 min-h-[150vh]">
-           {/* Column 1 */}
-           <div className="flex flex-col gap-4 mt-0">
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[400px]"
-               speed={0.1}
-               title="Neon Portrait"
-               category="Editorial"
-             />
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[300px]"
-               speed={0.2}
-               title="Forest Mist"
-               category="Landscape"
-             />
-           </div>
-
-           {/* Column 2 */}
-           <div className="flex flex-col gap-4 md:mt-20">
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[500px]"
-               speed={-0.1}
-               title="The Wedding"
-               category="Event"
-             />
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[350px]"
-               speed={0.05}
-               title="Urban Flow"
-               category="Street"
-             />
-           </div>
-
-           {/* Column 3 */}
-           <div className="flex flex-col gap-4 mt-0">
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[300px]"
-               speed={0.3}
-               title="Pink Haze"
-               category="Creative"
-             />
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[450px]"
-               speed={0.1}
-               title="Nature's Pattern"
-               category="Nature"
-             />
-           </div>
-
-           {/* Column 4 */}
-           <div className="flex flex-col gap-4 md:mt-32">
-             <PortfolioItem 
-               src="https://images.unsplash.com/photo-1551316679-9c6ae9dec224?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[400px]"
-               speed={-0.2}
-               title="Blue Abstract"
-               category="Abstract"
-             />
-              <PortfolioItem 
-               src="https://images.unsplash.com/photo-1620641788427-b9f4dbd0b50d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-               size="h-[300px]"
-               speed={0}
-               title="Lines & Curves"
-               category="Architecture"
-             />
-           </div>
-        </div>
-        
-        <div className="flex justify-center mt-20">
-          <button className="px-10 py-4 border border-white/20 rounded-full hover:bg-white hover:text-black transition-all duration-300 interactive uppercase tracking-widest text-sm">
-            View All Projects
-          </button>
+      {/* --- NEWSLETTER --- */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto bg-[#2D4F1E] rounded-[3rem] p-12 lg:p-20 relative overflow-hidden text-center text-white">
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/leaf.png')] opacity-10"></div>
+          <h2 className="text-4xl lg:text-5xl font-black mb-6">Stay Ahead of the Yield</h2>
+          <p className="text-white/80 mb-12 max-w-xl mx-auto">Get monthly market reports and priority access to new harvest reserves directly in your inbox.</p>
+          <form className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+            <input type="text" placeholder="Your Name" className="flex-1 px-6 py-4 rounded-2xl bg-white/10 border border-white/20 focus:bg-white/20 outline-none placeholder:text-white/50" />
+            <input type="email" placeholder="Email Address" className="flex-1 px-6 py-4 rounded-2xl bg-white/10 border border-white/20 focus:bg-white/20 outline-none placeholder:text-white/50" />
+            <button className="px-10 py-4 bg-[#E9EDC6] text-[#2D4F1E] font-bold rounded-2xl hover:bg-white transition-colors">Join Now</button>
+          </form>
         </div>
       </section>
 
       {/* --- FOOTER --- */}
-      <footer id="contact" className="bg-slate-950 text-white pt-24 pb-12 rounded-t-[3rem] mt-[-2rem] relative z-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-2xl font-bold">
-                 <Aperture className="text-blue-500" /> EVEREST
+      <footer className="bg-[#4A3728] text-white/90 pt-24 pb-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-12 mb-20">
+            <div className="col-span-2">
+              <div className="flex items-center gap-2 mb-8">
+                <div className="w-10 h-10 bg-white text-[#4A3728] rounded-lg flex items-center justify-center font-bold text-xl">B</div>
+                <span className="font-extrabold text-2xl uppercase tracking-tighter">Bluewave</span>
               </div>
-              <p className="text-gray-400">
-                Redefining photography through creative lens and future aesthetics.
+              <p className="text-white/60 max-w-sm mb-8 leading-relaxed">
+                Empowering the global supply chain through superior agricultural production and ethical trade partnerships.
               </p>
-            </div>
-            
-            <div>
-              <h4 className="font-bold text-lg mb-6">Services</h4>
-              <ul className="space-y-4 text-gray-400">
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Studio Shoot</li>
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Outdoor Events</li>
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Space Rental</li>
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Editing</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-lg mb-6">Student Zone</h4>
-              <ul className="space-y-4 text-gray-400">
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Login</li>
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Find My Gallery</li>
-                <li className="hover:text-blue-400 cursor-pointer transition-colors interactive">Pricing</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-lg mb-6">Connect</h4>
               <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-blue-600 transition-colors interactive">
-                  <Instagram size={20} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-blue-600 transition-colors interactive">
-                  <Twitter size={20} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-blue-600 transition-colors interactive">
-                  <Linkedin size={20} />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-blue-600 transition-colors interactive">
-                  <Mail size={20} />
-                </a>
+                <a href="#" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#4A3728] transition-all"><Twitter size={18} /></a>
+                <a href="#" className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:text-[#4A3728] transition-all"><Linkedin size={18} /></a>
               </div>
             </div>
-          </div>
-
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-500 text-sm">© 2024 Everest Studio. All rights reserved.</p>
-            <div className="flex gap-6 text-gray-500 text-sm">
-              <span className="cursor-pointer hover:text-white transition-colors interactive">Privacy Policy</span>
-              <span className="cursor-pointer hover:text-white transition-colors interactive">Terms of Service</span>
+            <div className="flex flex-col gap-4">
+              <h4 className="font-bold text-white mb-2">Our Story</h4>
+              <a href="#" className="text-sm hover:text-white transition-colors">Mission/Vision</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Team/Farmers</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Sustainability</a>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h4 className="font-bold text-white mb-2">Products</h4>
+              <a href="#" className="text-sm hover:text-white transition-colors">Cocoa Beans</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Cashew Nuts</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Quality Grading</a>
+            </div>
+            <div className="flex flex-col gap-4">
+              <h4 className="font-bold text-white mb-2">Resources</h4>
+              <a href="#" className="text-sm hover:text-white transition-colors">Farm Calendar</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Bid Status</a>
+              <a href="#" className="text-sm hover:text-white transition-colors">Careers</a>
             </div>
           </div>
-          
-          <div className="mt-12 text-center md:text-right">
-             <h1 className="text-[10vw] font-bold text-white/5 leading-none select-none">EVEREST</h1>
+          <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-white/40 tracking-widest uppercase">
+            <p>© 2026 BLUEWAVE MULTI BUSINESS ENTERPRISES. ALL RIGHTS RESERVED.</p>
+            <div className="flex gap-8">
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms of Trade</a>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* --- CHATBOT & WHATSAPP --- */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-[200]">
+        <a 
+          href="https://wa.me/yournumber" 
+          target="_blank"
+          className="w-16 h-16 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" width="30" height="30" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-12.7 8.5 8.5 0 0 1 5.3 1.9L21 3Z"></path><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Z"></path><path d="M14 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1Z"></path><path d="M9 14h6"></path></svg>
+        </a>
+        
+        <div className="relative">
+          <AnimatePresence>
+            {isChatOpen && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="absolute bottom-20 right-0 w-[350px] bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 flex flex-col overflow-hidden"
+              >
+                <div className="bg-[#8B5E3C] p-6 text-white flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold">WaveBot</h4>
+                    <p className="text-xs opacity-70">Typically replies instantly</p>
+                  </div>
+                  <X className="cursor-pointer" onClick={() => setIsChatOpen(false)} />
+                </div>
+                <div className="h-[300px] overflow-y-auto p-6 flex flex-col gap-4 bg-[#FEFAE0]/30">
+                  {chatHistory.map((chat, i) => (
+                    <div key={i} className={`max-w-[80%] p-3 rounded-2xl text-sm ${chat.type === 'user' ? 'bg-[#8B5E3C] text-white self-end rounded-tr-none' : 'bg-white border border-gray-100 self-start rounded-tl-none'}`}>
+                      {chat.text}
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 flex gap-2">
+                  <input 
+                    type="text" 
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Ask a question..." 
+                    className="flex-1 bg-gray-50 px-4 py-2 rounded-xl outline-none text-sm" 
+                  />
+                  <button type="submit" className="p-2 bg-[#8B5E3C] text-white rounded-xl"><Send size={18} /></button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <button 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className="w-16 h-16 bg-[#8B5E3C] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform active:scale-95"
+          >
+            {isChatOpen ? <X size={30} /> : <MessageCircle size={30} />}
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
