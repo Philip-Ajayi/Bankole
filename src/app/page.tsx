@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { 
   ArrowRight, 
@@ -49,7 +49,6 @@ const BID_PRODUCTS = [
 
 const Counter = ({ value, duration = 2 }: { value: number; duration?: number }) => {
   const [count, setCount] = useState(0);
-  const nodeRef = useRef(null);
 
   useEffect(() => {
     let start = 0;
