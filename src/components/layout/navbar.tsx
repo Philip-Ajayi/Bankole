@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, 
   Menu, 
@@ -120,6 +120,7 @@ export default function App() {
   
   return (
     <div>
+    <div className="min-h-screen bg-[#FEFAE0] text-[#4A3728] font-sans selection:bg-[#D4A373] selection:text-white overflow-x-hidden">
       
       {/* --- NAVIGATION --- */}
       <nav className="fixed top-0 w-full z-[100] bg-white/70 backdrop-blur-xl border-b border-white/20">
@@ -169,5 +170,7 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </div>
+
      );
 }
