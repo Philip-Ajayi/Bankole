@@ -10,53 +10,50 @@ import {
 
 // --- DATA ---
 const NAV_DATA = [
-  { title: "Home", link: "/home", submenu: [] },
   {
-    title: "About Us",
-    link: "/about-us",
+    title: "About",
+    link: "#",
     submenu: [
-      { title: "Our Story", link: "/about-us/our-story" },
-      { title: "Mission/Vision", link: "/about-us/mission-vision" },
-      { title: "Team/Farmers", link: "/about-us/team-farmers" }
+      { title: "Mission/Vision", link: "/about/mission-vision" },
+      { title: "Environmental Practice", link: "/about/environmental/practice" },
+      { title: "Eisk Management", link: "/about-us/risk-management" }
     ]
   },
   {
     title: "Farming Practice",
-    link: "/farming-practice",
+    link: "#",
     submenu: [
       {
-        title: "Crop Farming",
-        link: "/farming-practice/crop-farming",
-        submenu: [
-          { title: "Cocoa Farming", link: "/farming-practice/crop-farming/cocoa" },
-          { title: "Cashew Farming", link: "/farming-practice/crop-farming/cashew" }
-        ]
+        title: "Maintenance",
+        link: "/farm/maimtenancw",
       },
-      { title: "Sustainable Farming", link: "/farming-practice/sustainable-farming" },
-      { title: "Organic Farming", link: "/farming-practice/organic-farming" },
-      { title: "Farming Calendar", link: "/farming-practice/farming-calendar" }
+      { title: "Method", link: "/farm/method" },
+      { title: "Nuresey and Planting", link: "/farm/nursery-planting" },
+      { title: "Harvesting and Processing", link: "/farm/harvesting-processing" },
+      { title: "Equipments", link: "/farm/Equipments" },
+      { title: "Infrastructures", link: "/farm/infrastructures" },
     ]
   },
   {
     title: "Products",
     link: "/products",
     submenu: [
-      { title: "Cocoa Beans", link: "/products/cocoa-beans" },
-      { title: "Cashew Nuts", link: "/products/cashew-nuts" },
-      { title: "Quality & Grading", link: "/products/quality-grading" },
-      { title: "Packaging", link: "/products/packaging-bulk-orders" }
+      { title: "Cocoa", link: "/products/cocoa" },
+      { title: "Cashew", link: "/products/cashew" },
+      { title: "Competitive Advantage", link: "/products/competitive-advantage" },
     ]
   },
   {
-    title: "Services",
-    link: "/services",
+    title: "Sales and Logistics",
+    link: "/sales-logistics",
     submenu: [
-      { title: "Consultations", link: "/services/consultations-workshops" },
-      { title: "Farm Tours", link: "/services/farm-tours" }
+      { title: "Purchase and Logistics Process", link: "/sales-logistics/purchase-logistics-process" },
+      { title: "Sales Channels", link: "/sales-logistics/sales-channels" },
+      { title: "Accessibility", link: "/sales-logistics/accessibility" }
     ]
   },
-  { title: "Bid/Reservation", link: "/bid-reservation", submenu: [] },
-  { title: "Knowledge/Blog", link: "/blog", submenu: [] },
+  { title: "Blog", link: "/blog", submenu: [] },
+  { title: "Contact", link: "/ontact", submenu: [] },
 ];
 
 
