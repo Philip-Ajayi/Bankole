@@ -47,28 +47,31 @@ export default function App() {
             </div>
             <div className="flex flex-col gap-4">
               <h4 className="font-bold text-white mb-2">Our Story</h4>
-              <a href="#" className="text-sm hover:text-white transition-colors">Mission/Vision</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Team/Farmers</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Sustainability</a>
+              <a href="/about/mission-vision" className="text-sm hover:text-white transition-colors">Mission/Vision</a>
+              <a href="/about/environmental/practice" className="text-sm hover:text-white transition-colors">Environmental Practice</a>
+              <a href="/about-us/risk-management" className="text-sm hover:text-white transition-colors">Risk Management</a>
             </div>
             <div className="flex flex-col gap-4">
               <h4 className="font-bold text-white mb-2">Products</h4>
-              <a href="#" className="text-sm hover:text-white transition-colors">Cocoa Beans</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Cashew Nuts</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Quality Grading</a>
+              <a href="/products/cocoa" className="text-sm hover:text-white transition-colors">Cocoa</a>
+              <a href="/products/cashew" className="text-sm hover:text-white transition-colors">Cashew</a>
+              <a href="/products/competitive-advantage" className="text-sm hover:text-white transition-colors">Competitive Advantage</a>
             </div>
             <div className="flex flex-col gap-4">
-              <h4 className="font-bold text-white mb-2">Resources</h4>
-              <a href="#" className="text-sm hover:text-white transition-colors">Farm Calendar</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Bid Status</a>
-              <a href="#" className="text-sm hover:text-white transition-colors">Careers</a>
+              <h4 className="font-bold text-white mb-2">Farming Practice</h4>
+              <a href="/farm/maimtenance" className="text-sm hover:text-white transition-colors">Maintenance</a>
+              <a href="/farm/method" className="text-sm hover:text-white transition-colors">Method</a>
+              <a href="/farm/nursery-planting" className="text-sm hover:text-white transition-colors">Nursery and Planting</a>
+              <a href=""/farm/harvesting-processing" className="text-sm hover:text-white transition-colors">"Harvesting and Processing</a>
+              <a href="/farm/equipments" className="text-sm hover:text-white transition-colors">Equipments</a>
+              <a href="/farm/infrastructures" className="text-sm hover:text-white transition-colors">Infrastructures</a>
             </div>
           </div>
           <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-white/40 tracking-widest uppercase">
             <p>© 2026 BLUEWAVE MULTI BUSINESS ENTERPRISES. ALL RIGHTS RESERVED.</p>
             <div className="flex gap-8">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Trade</a>
+              <a href="/blog">Blog</a>
+              <a href="/ontact">Contact</a>
             </div>
           </div>
         </div>
