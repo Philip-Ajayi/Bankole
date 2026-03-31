@@ -46,7 +46,7 @@ export default function App() {
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              <h4 className="font-bold text-white mb-2">Our Story</h4>
+              <h4 className="font-bold text-white mb-2">About</h4>
               <a href="/about/mission-vision" className="text-sm hover:text-white transition-colors">Mission/Vision</a>
               <a href="/about/environmental/practice" className="text-sm hover:text-white transition-colors">Environmental Practice</a>
               <a href="/about-us/risk-management" className="text-sm hover:text-white transition-colors">Risk Management</a>
@@ -59,10 +59,10 @@ export default function App() {
             </div>
             <div className="flex flex-col gap-4">
               <h4 className="font-bold text-white mb-2">Farming Practice</h4>
-              <a href="/farm/maimtenance" className="text-sm hover:text-white transition-colors">Maintenance</a>
+              <a href="/farm/maintenance" className="text-sm hover:text-white transition-colors">Maintenance</a>
               <a href="/farm/method" className="text-sm hover:text-white transition-colors">Method</a>
               <a href="/farm/nursery-planting" className="text-sm hover:text-white transition-colors">Nursery and Planting</a>
-              <a href=""/farm/harvesting-processing" className="text-sm hover:text-white transition-colors">"Harvesting and Processing</a>
+              <a href="/farm/harvesting-processing" className="text-sm hover:text-white transition-colors">"Harvesting and Processing</a>
               <a href="/farm/equipments" className="text-sm hover:text-white transition-colors">Equipments</a>
               <a href="/farm/infrastructures" className="text-sm hover:text-white transition-colors">Infrastructures</a>
             </div>
