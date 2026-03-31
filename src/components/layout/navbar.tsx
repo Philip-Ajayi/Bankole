@@ -25,7 +25,7 @@ const NAV_DATA = [
     submenu: [
       {
         title: "Maintenance",
-        link: "/farm/maimtenance",
+        link: "/farm/maintenance",
       },
       { title: "Method", link: "/farm/method" },
       { title: "Nuresey and Planting", link: "/farm/nursery-planting" },
