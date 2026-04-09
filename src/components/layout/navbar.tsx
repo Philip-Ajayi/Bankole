@@ -27,7 +27,7 @@ const NAV_DATA = [
         title: "Maintenance",
         link: "/farm/maintenance",
       },
-      { title: "Method", link: "/farm/method" },
+      { title: "Method", link: "/farm/methods" },
       { title: "Nuresey and Planting", link: "/farm/nursery-planting" },
       { title: "Harvesting and Processing", link: "/farm/harvesting-processing" },
       { title: "Equipments", link: "/farm/equipments" },
