@@ -48,8 +48,8 @@ export default function App() {
             <div className="flex flex-col gap-4">
               <h4 className="font-bold text-white mb-2">About</h4>
               <a href="/about/mission-vision" className="text-sm hover:text-white transition-colors">Mission/Vision</a>
-              <a href="/about/environmental/practice" className="text-sm hover:text-white transition-colors">Environmental Practice</a>
-              <a href="/about-us/risk-management" className="text-sm hover:text-white transition-colors">Risk Management</a>
+              <a href="/about/environmental-practice" className="text-sm hover:text-white transition-colors">Environmental Practice</a>
+              <a href="/about/risk-management" className="text-sm hover:text-white transition-colors">Risk Management</a>
             </div>
             <div className="flex flex-col gap-4">
               <h4 className="font-bold text-white mb-2">Products</h4>
