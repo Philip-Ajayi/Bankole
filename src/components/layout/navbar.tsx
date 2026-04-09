@@ -15,8 +15,8 @@ const NAV_DATA = [
     link: "#",
     submenu: [
       { title: "Mission/Vision", link: "/about/mission-vision" },
-      { title: "Environmental Practice", link: "/about/environmental/practice" },
-      { title: "Risk Management", link: "/about-us/risk-management" }
+      { title: "Environmental Practice", link: "/about/environmental-practice" },
+      { title: "Risk Management", link: "/about/risk-management" }
     ]
   },
   {
